@@ -78,6 +78,33 @@ async function run() {
       }
     });
 
+    app.patch("/tasks/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updateData = req.body;
+
+        const filter = { _id: new ObjectId(id) };
+
+        const updateDoc = {
+          $set: updateData,
+        };
+
+        const result = await tasksCollection.updateOne(filter, updateDoc);
+
+        res.send({
+          success: true,
+          message: "Task updated successfully",
+          result,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: "Failed to update task",
+          error: error.message,
+        });
+      }
+    });
+
     // post models
     app.post("/models", async (req, res) => {
       try {
@@ -126,7 +153,6 @@ async function run() {
           };
         }
 
-    
         let sortQuery = {};
 
         if (sortBy) {
