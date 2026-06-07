@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 require("dotenv").config();
 const app = express();
@@ -25,8 +25,75 @@ app.get("/", (req, res) => {
 async function run() {
   try {
     await client.connect();
+
+    const db = client.db("saytica_eval_console");
     const tasksCollection = db.collection("tasks");
-    const annotationsCollection = db.collection("annotations");
+    const modelsCollection = db.collection("models");
+
+    app.post("/tasks", async (req, res) => {
+      try {
+        const newTask = req.body;
+
+        // basic validation (optional but good)
+        if (!newTask.title) {
+          return res.status(400).json({
+            success: false,
+            message: "Title is required",
+          });
+        }
+
+        // insert task
+        const result = await tasksCollection.insertOne({
+          ...newTask,
+          status: "todo",
+          createdAt: new Date(),
+        });
+
+        res.status(201).json({
+          success: true,
+          message: "Task created successfully",
+          result,
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: "Failed to create task",
+          error: error.message,
+        });
+      }
+    });
+
+    app.post("/models", async (req, res) => {
+  try {
+    const newModel = req.body;
+
+    // basic validation
+    if (!newModel.name || !newModel.provider) {
+      return res.status(400).json({
+        success: false,
+        message: "name and provider are required",
+      });
+    }
+
+    const result = await modelsCollection.insertOne({
+      ...newModel,
+      evaluatedAt: new Date(),
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Model added successfully",
+      result,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to add model",
+      error: error.message,
+    });
+  }
+});
 
     await client.db("admin").command({ ping: 1 });
     console.log(
