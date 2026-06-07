@@ -30,6 +30,7 @@ async function run() {
     const tasksCollection = db.collection("tasks");
     const modelsCollection = db.collection("models");
 
+    // post tasks
     app.post("/tasks", async (req, res) => {
       try {
         const newTask = req.body;
@@ -63,37 +64,51 @@ async function run() {
       }
     });
 
+    app.get("/tasks", async (req, res) => {
+      try {
+        const tasks = await tasksCollection.find().toArray();
+
+        res.send(tasks);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: "Failed to get tasks",
+          error: error.message,
+        });
+      }
+    });
+
+    // post models
     app.post("/models", async (req, res) => {
-  try {
-    const newModel = req.body;
+      try {
+        const newModel = req.body;
 
-    // basic validation
-    if (!newModel.name || !newModel.provider) {
-      return res.status(400).json({
-        success: false,
-        message: "name and provider are required",
-      });
-    }
+        // basic validation
+        if (!newModel.name || !newModel.provider) {
+          return res.status(400).json({
+            success: false,
+            message: "name and provider are required",
+          });
+        }
 
-    const result = await modelsCollection.insertOne({
-      ...newModel,
-      evaluatedAt: new Date(),
+        const result = await modelsCollection.insertOne({
+          ...newModel,
+          evaluatedAt: new Date(),
+        });
+
+        res.status(201).json({
+          success: true,
+          message: "Model added successfully",
+          result,
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: "Failed to add model",
+          error: error.message,
+        });
+      }
     });
-
-    res.status(201).json({
-      success: true,
-      message: "Model added successfully",
-      result,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to add model",
-      error: error.message,
-    });
-  }
-});
 
     await client.db("admin").command({ ping: 1 });
     console.log(
