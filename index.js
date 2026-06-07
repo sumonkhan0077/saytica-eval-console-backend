@@ -110,6 +110,58 @@ async function run() {
       }
     });
 
+    app.get("/models", async (req, res) => {
+      try {
+        const { search, sortBy, order } = req.query;
+
+        //  SEARCH name + provider letter matching
+        let query = {};
+
+        if (search) {
+          query = {
+            $or: [
+              { name: { $regex: search, $options: "i" } },
+              { provider: { $regex: search, $options: "i" } },
+            ],
+          };
+        }
+
+    
+        let sortQuery = {};
+
+        if (sortBy) {
+          const sortOrder = order === "desc" ? -1 : 1;
+
+          // allowed sort fields
+          const allowedFields = [
+            "name",
+            "provider",
+            "accuracy",
+            "latencyMs",
+            "costPer1k",
+            "evaluatedAt",
+          ];
+
+          if (allowedFields.includes(sortBy)) {
+            sortQuery[sortBy] = sortOrder;
+          }
+        }
+
+        const models = await modelsCollection
+          .find(query)
+          .sort(sortQuery)
+          .toArray();
+
+        res.send(models);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: "Failed to get models",
+          error: error.message,
+        });
+      }
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
