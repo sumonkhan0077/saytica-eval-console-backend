@@ -83,6 +83,10 @@ async function run() {
         const id = req.params.id;
         const updateData = req.body;
 
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid task id" });
+        }
+
         const filter = { _id: new ObjectId(id) };
 
         const updateDoc = {
